@@ -305,7 +305,8 @@ class GameVisuals {
   }
 
   // assumes ties are not possible.
-  void renderGameOver(GameState game) {
+  void renderWinner(GameState game) {
+    lcd.clear();
     String winner;
     if (game.player1.keys == 3) winner = game.player1.name;
     if (game.player2.keys == 3) winner = game.player2.name;
@@ -316,7 +317,7 @@ class GameVisuals {
 
   void render(GameState game) {
     lcd.home();
-    if (isGameOver(game)) renderGameOver(game);
+    if (isGameOver(game)) renderWinner(game);
     else {
       if (game.currentPhase == titlePage) renderTitle();
       if (game.currentPhase == player1Prompt) renderP1Prompt(game);
