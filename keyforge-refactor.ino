@@ -99,7 +99,12 @@ class GameState {
   int currentPlayerForgeMod = 0;
   int currentPlayerHand = 0;
   int currentPlayerPenalty = 0;
-  
+
+  int calcKeyCost() {
+    int total = rules.baseKeyCost + currentPlayerForgeMod;
+    if (total < 0) return 0;
+    return total;
+  }
 
   void changeForgeMod(int delta) {
     currentPlayerForgeMod = commons.calcChange(currentPlayerForgeMod, delta, rules.forgeModRange[0], rules.forgeModRange[1]);
@@ -114,6 +119,17 @@ class GameState {
     currentPlayer = currentPlayer == 1 ? 2 : 1;
     currentPlayerHand = 0;
     currentPlayerPenalty = 0;
+  }
+
+  void attemptForge() {
+    if (currentPlayer == 1 && player1.aember >= calcKeyCost()) {
+      player1.changeStat(2, 1);
+      player1.changeStat(1, -calcKeyCost());
+    }
+    if (currentPlayer == 2 && player2.aember >= calcKeyCost()){
+      player2.changeStat(2, 1);
+      player2.changeStat(1, -calcKeyCost());
+    }
   }
 
   void nextPhase() {
@@ -135,15 +151,14 @@ class GameState {
         if (p1SkipChains || p2SkipChains) {
           setNextTurnState();
           currentPhase = forgePrompt;
-        } else {
-          currentPhase = chainsPrompt;
-        }
+        } 
+        else currentPhase = chainsPrompt;
         break;
 
       case chainsPrompt:
-        // set currentPlayer's penalty:
-        currentPlayerPenalty = currentPlayer == 1 ? rules.calcPenalty(player1.chains) : rules.calcPenalty(player2.chains);
-        // remove 1 chain only if they draw cards:
+        currentPlayerPenalty = currentPlayer == 1 
+          ? rules.calcPenalty(player1.chains) 
+          : rules.calcPenalty(player2.chains);
         if (currentPlayerHand < rules.baseHandSize + currentPlayerPenalty) {
           if (currentPlayer == 1) player1.changeStat(0, -1);
           else player2.changeStat(0, -1);
@@ -157,6 +172,8 @@ class GameState {
         break;
 
       case forgePrompt:
+        attemptForge();
+        currentPlayerForgeMod = 0;
         currentPhase = mainPlayPhase;
         break;
     }
@@ -261,7 +278,15 @@ class GameVisuals {
   }
 
   void renderForgePrompt(GameState game) {
-    lcd.print("forge prompt");
+    lcd.home();
+    const int mod = game.currentPlayerForgeMod;
+    lcd.print(getPlayerName(game) + " forge mod:");
+    if (mod == 0) lcd.print("  ");
+    if (mod > 0 && mod < 10) lcd.print(" +");
+    if (mod > 9) lcd.print("+");
+    if (mod < 0 && mod > -10) lcd.print(" ");
+    lcd.print(mod);
+    lcd.setCursor(15, 0);
   }
 
   bool isGameOver(GameState game) {
@@ -280,9 +305,8 @@ class GameVisuals {
 
   void render(GameState game) {
     lcd.home();
-    if (isGameOver(game)) {
-      renderGameOver(game);
-    } else {
+    if (isGameOver(game)) renderGameOver(game);
+    else {
       if (game.currentPhase == titlePage) renderTitle();
       if (game.currentPhase == player1Prompt) renderP1Prompt(game);
       if (game.currentPhase == player2Prompt) renderP2Prompt(game);
@@ -320,12 +344,12 @@ void loop() {
     if (currentButtons == BUTTON_UP) {
       if (game.currentPhase == mainPlayPhase) game.changePlayerStat(1);
       if (game.currentPhase == chainsPrompt) game.changeHandSize(1);
-      // if (game.currentPhase == forgePrompt) game.changeForgeMods(1);
+      if (game.currentPhase == forgePrompt) game.changeForgeMod(1);
     }
     if (currentButtons == BUTTON_DOWN) {
       if (game.currentPhase == mainPlayPhase) game.changePlayerStat(-1);
       if (game.currentPhase == chainsPrompt) game.changeHandSize(-1);
-      // if (game.currentPhase == forgePrompt) game.changeForgeMods(-1);
+      if (game.currentPhase == forgePrompt) game.changeForgeMod(-1);
     }
     // toggle between players:
     if (currentButtons == BUTTON_RIGHT + BUTTON_LEFT) {
