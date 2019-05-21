@@ -122,13 +122,14 @@ class GameState {
   }
 
   void attemptForge() {
-    if (currentPlayer == 1 && player1.aember >= calcKeyCost()) {
+    int keyCost = calcKeyCost();
+    if (currentPlayer == 1 && player1.aember >= keyCost) {
       player1.changeStat(2, 1);
-      player1.changeStat(1, -calcKeyCost());
+      player1.changeStat(1, -keyCost);
     }
-    if (currentPlayer == 2 && player2.aember >= calcKeyCost()){
+    if (currentPlayer == 2 && player2.aember >= keyCost){
       player2.changeStat(2, 1);
-      player2.changeStat(1, -calcKeyCost());
+      player2.changeStat(1, -keyCost);
     }
   }
 
@@ -152,8 +153,9 @@ class GameState {
         if (p1SkipChains || p2SkipChains) {
           setNextTurnState();
           currentPhase = forgePrompt;
-        } 
-        else currentPhase = chainsPrompt;
+        } else {
+          currentPhase = chainsPrompt;
+        }
         break;
 
       case chainsPrompt:
@@ -161,8 +163,9 @@ class GameState {
           ? rules.calcPenalty(player1.chains) 
           : rules.calcPenalty(player2.chains);
         if (currentPlayerHand < rules.baseHandSize + currentPlayerPenalty) {
-          if (currentPlayer == 1) player1.changeStat(0, -1);
-          else player2.changeStat(0, -1);
+          currentPlayer == 1
+            ? player1.changeStat(0, -1)
+            : player2.changeStat(0, -1);
         }
         currentPhase = drawPrompt;
         break;
@@ -247,6 +250,7 @@ class GameVisuals {
 
   void renderTitle() {
     lcd.print("KEYFORGE !");
+    hideCursor();
   }
 
   void renderP1Prompt(GameState game) {
@@ -363,7 +367,7 @@ void loop() {
   lastButton = currentButtons;
   unsigned long currentTime = millis();
 
-  if (currentTime - lastRender > 300) {
+  if (currentTime - lastRender > 250) {
     lastRender = currentTime;
     visuals.render(game);
   }
