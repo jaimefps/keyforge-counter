@@ -26,13 +26,6 @@ enum PlayerStats {
   aember
 };
 
-struct KeyRange
-{
-  min: 0,
-  max: 3,
-};
-
-
 class GameRules {
   public:
 
@@ -110,7 +103,7 @@ class GameState {
   PlayerState player1 = PlayerState("P1");
   PlayerState player2 = PlayerState("P2");
 
-  String currentPhase = titlePage;
+  int currentPhase = titlePage;
   int currentStat = 0;
   int currentPlayer = 1;
   int forgeModifier = 0;
@@ -121,31 +114,34 @@ class GameState {
   }
 
   void nextPhase() {
-    if (currentPhase == titlePage) {
-      currentPhase = player1Prompt;
-    }
-    else if (currentPhase == player1Prompt) {
-      currentPhase = player2Prompt;
-    }
-    // if player2Prompt then mainPlayPhase:
-    else if (currentPhase == player2Prompt) {
-      currentPhase = mainPlayPhase;
-    }
-    // if mainPlayPhase then chainsPrompt or forgePrompt:
-    else if (currentPhase == mainPlayPhase) {
-      currentPhase = chainsPrompt;
-    }
-    // if chainsPrompt then drawPrompt:
-    else if (currentPhase == phases[4]) {
-      currentPhase = phases[5];
-    }
-    // if drawPrompt then forgePrompt:
-    else if (currentPhase == phases[5]) {
-      currentPhase = phases[6];
-    }
-    // if forgePrompt then mainPlayPhase:
-    else if (currentPhase == phases[6]) {
-      currentPhase = phases[3];
+    switch(currentPhase) {
+      case titlePage:
+        currentPhase = player1Prompt;
+        break;
+
+      case player1Prompt:
+        currentPhase = player2Prompt;
+        break;
+
+      case player2Prompt:
+        currentPhase = mainPlayPhase;
+        break;
+
+      case mainPlayPhase:
+        currentPhase = chainsPrompt;
+        break;
+
+      case chainsPrompt:
+        currentPhase = drawPrompt;
+        break;
+
+      case drawPrompt:
+        currentPhase = forgePrompt;
+        break;
+
+      case forgePrompt:
+        currentPhase = mainPlayPhase;
+        break;
     }
   }
 
@@ -245,12 +241,12 @@ class GameVisuals {
       renderGameOver(game);
     } else {
       if (game.currentPhase == titlePage) renderTitle();
-      if (game.currentPhase == game.phases[1]) renderP1Prompt(game);
-      if (game.currentPhase == game.player2Prompt) renderP2Prompt(game);
-      if (game.currentPhase == game.phases[3]) renderPlayers(game);
-      if (game.currentPhase == game.phases[4]) renderChainsPrompt(game);
-      if (game.currentPhase == game.phases[5]) renderDrawCards(game);
-      if (game.currentPhase == game.phases[6]) renderForgePrompt(game);
+      if (game.currentPhase == player1Prompt) renderP1Prompt(game);
+      if (game.currentPhase == player2Prompt) renderP2Prompt(game);
+      if (game.currentPhase == mainPlayPhase) renderPlayers(game);
+      if (game.currentPhase == chainsPrompt) renderChainsPrompt(game);
+      if (game.currentPhase == drawPrompt) renderDrawCards(game);
+      if (game.currentPhase == forgePrompt) renderForgePrompt(game);
     }
   }
 };
@@ -279,7 +275,7 @@ void loop() {
       game.currentStat %= 3;
     }
     if (currentButtons == BUTTON_UP) {
-      if (game.currentPhase == game.phases[3]) game.changePlayerStat(1);
+      if (game.currentPhase == mainPlayPhase) game.changePlayerStat(1);
       // if (game.currentPhase == game.phases[4]) game.changeCardsInHand(1);
       // if (game.currentPhase == game.phases[6]) game.changeForgeMods(1);
     }
