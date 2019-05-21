@@ -320,8 +320,8 @@ class GameVisuals {
     if (isGameOver(game)) renderWinner(game);
     else {
       if (game.currentPhase == titlePage) renderTitle();
-      if (game.currentPhase == player1Prompt) renderP1Prompt(game);
-      if (game.currentPhase == player2Prompt) renderP2Prompt(game);
+      // if (game.currentPhase == player1Prompt) renderP1Prompt(game);
+      // if (game.currentPhase == player2Prompt) renderP2Prompt(game);
       if (game.currentPhase == mainPlayPhase) renderPlayers(game);
       if (game.currentPhase == chainsPrompt) renderChainsPrompt(game);
       if (game.currentPhase == drawPrompt) renderDrawCards(game);
