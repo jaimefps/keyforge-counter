@@ -93,7 +93,7 @@ class GameState {
   PlayerState player2 = PlayerState("P2");
 
   int currentStat = 0;
-  int currentPhase = mainPlayPhase;
+  int currentPhase = titlePage;
 
   int currentPlayer = 1;
   int currentPlayerForgeMod = 0;
@@ -137,9 +137,10 @@ class GameState {
     bool p2SkipChains = currentPlayer == 2 && player2.chains == 0;
 
     switch(currentPhase) {
-      // case titlePage:
-      //   currentPhase = player1Prompt;
-      //   break;
+      case titlePage:
+        currentPhase = mainPlayPhase;
+        break;
+
       // case player1Prompt:
       //   currentPhase = player2Prompt;
       //   break;
@@ -295,12 +296,14 @@ class GameVisuals {
     return false;
   }
 
+  // assumes ties are not possible.
   void renderGameOver(GameState game) {
     String winner;
     if (game.player1.keys == 3) winner = game.player1.name;
     if (game.player2.keys == 3) winner = game.player2.name;
     lcd.print(winner);
     lcd.print(" wins!");
+    hideCursor();
   }
 
   void render(GameState game) {
