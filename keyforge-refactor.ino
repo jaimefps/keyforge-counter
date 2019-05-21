@@ -2,7 +2,11 @@
 
 Adafruit_RGBLCDShield lcd = Adafruit_RGBLCDShield();
 
-// NOW : use enums to track static list options:
+/**
+ * TODO
+ * 1- titlePage animation
+ * 2- prompt for player names
+ */
 
 void setup() {
   lcd.begin(16, 2);
@@ -253,13 +257,13 @@ class GameVisuals {
     hideCursor();
   }
 
-  void renderP1Prompt(GameState game) {
-    lcd.print("p1 name");
-  }
+  // void renderP1Prompt(GameState game) {
+  //   lcd.print("p1 name");
+  // }
 
-  void renderP2Prompt(GameState game) {
-    lcd.print("p2 name");
-  }
+  // void renderP2Prompt(GameState game) {
+  //   lcd.print("p2 name");
+  // }
 
   void renderPlayers(GameState game) {
     renderLabels();
