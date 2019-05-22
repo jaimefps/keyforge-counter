@@ -4,8 +4,13 @@ Adafruit_RGBLCDShield lcd = Adafruit_RGBLCDShield();
 
 /**
  * TODO
+ *
  * 1- titlePage animation
- * 2- prompt for player names
+ * 1.2 - winner screen animation
+ * 2- prompt for player names before game starts
+ * 3- track whether the currentPlayer was forcibly changed (click LEFT + RIGHT), 
+ *    such that if we click "SELECT" to move to next screen, 
+ *    we show the prompts for the correct players.
  */
 
 void setup() {
@@ -16,13 +21,19 @@ void setup() {
 
 enum GamePhases {
   titlePage,
-  player1Prompt,
-  player2Prompt,
+  // player1Prompt,
+  // player2Prompt,
   mainPlayPhase,
   chainsPrompt,
   drawPrompt,
   forgePrompt
 };
+
+enum PlayerStats { ch, ae, ky };
+
+int calcChange(int currentValue, int delta, int minimum, int maximum) {
+  return min(max(currentValue + delta, minimum), maximum);
+}
 
 class GameRules {
   public:
@@ -44,22 +55,10 @@ class GameRules {
   }
 };
 
-class CommonLogic {
-  public:
-
-  int calcChange(int currentValue, int delta, int minimum, int maximum) {
-    int total = currentValue + delta;
-    if (total < minimum) return minimum;
-    if (total > maximum) return maximum;
-    return total;
-  }
-};
-
 const GameRules rules;
-const CommonLogic commons;
 
 class PlayerState {
-  public: 
+  public:
 
   String name;
   int chains = rules.chainRange[0];
@@ -71,21 +70,21 @@ class PlayerState {
   }
 
   void changeAember(int delta) {
-    aember = commons.calcChange(aember, delta, rules.aemberRange[0], rules.aemberRange[1]);
+    aember = calcChange(aember, delta, rules.aemberRange[0], rules.aemberRange[1]);
   }
 
   void changeKeys(int delta) {
-    keys = commons.calcChange(keys, delta, rules.keyRange[0], rules.keyRange[1]);
+    keys = calcChange(keys, delta, rules.keyRange[0], rules.keyRange[1]);
   }
 
   void changeChains(int delta) {
-    chains = commons.calcChange(chains, delta, rules.chainRange[0], rules.chainRange[1]);
+    chains = calcChange(chains, delta, rules.chainRange[0], rules.chainRange[1]);
   }
 
   void changeStat(int stat, int delta) {
-    if (stat == 0) changeChains(delta);
-    if (stat == 1) changeAember(delta);
-    if (stat == 2) changeKeys(delta);
+    if (stat == ch) changeChains(delta);
+    if (stat == ae) changeAember(delta);
+    if (stat == ky) changeKeys(delta);
   }
 };
 
@@ -105,17 +104,15 @@ class GameState {
   int currentPlayerPenalty = 0;
 
   int calcKeyCost() {
-    int total = rules.baseKeyCost + currentPlayerForgeMod;
-    if (total < 0) return 0;
-    return total;
+    return max(rules.baseKeyCost + currentPlayerForgeMod, 0);
   }
 
   void changeForgeMod(int delta) {
-    currentPlayerForgeMod = commons.calcChange(currentPlayerForgeMod, delta, rules.forgeModRange[0], rules.forgeModRange[1]);
+    currentPlayerForgeMod = calcChange(currentPlayerForgeMod, delta, rules.forgeModRange[0], rules.forgeModRange[1]);
   }
 
   void changeHandSize(int delta) {
-    currentPlayerHand = commons.calcChange(currentPlayerHand, delta, rules.handRange[0], rules.handRange[1]);
+    currentPlayerHand = calcChange(currentPlayerHand, delta, rules.handRange[0], rules.handRange[1]);
   }
 
   void setNextTurnState() {
@@ -167,9 +164,8 @@ class GameState {
           ? rules.calcPenalty(player1.chains) 
           : rules.calcPenalty(player2.chains);
         if (currentPlayerHand < rules.baseHandSize + currentPlayerPenalty) {
-          currentPlayer == 1
-            ? player1.changeStat(0, -1)
-            : player2.changeStat(0, -1);
+          if (currentPlayer == 1) player1.changeStat(0, -1);
+          else player2.changeStat(0, -1);
         }
         currentPhase = drawPrompt;
         break;
@@ -236,8 +232,7 @@ class GameVisuals {
       rules.baseHandSize 
       + game.currentPlayerPenalty 
       - game.currentPlayerHand;
-
-    return drawCapacity > 0 ? drawCapacity : 0;
+    return max(drawCapacity, 0);
   }
 
   String getPlayerName(GameState game) {
@@ -290,18 +285,16 @@ class GameVisuals {
     lcd.home();
     const int mod = game.currentPlayerForgeMod;
     lcd.print(getPlayerName(game) + " forge mod:");
+    if (mod < 0 && mod > -10) lcd.print(" ");
     if (mod == 0) lcd.print("  ");
     if (mod > 0 && mod < 10) lcd.print(" +");
     if (mod > 9) lcd.print("+");
-    if (mod < 0 && mod > -10) lcd.print(" ");
     lcd.print(mod);
     lcd.setCursor(15, 0);
   }
 
   bool isGameOver(GameState game) {
-    if (game.player1.keys == 3) return true;
-    if (game.player2.keys == 3) return true;
-    return false;
+    return game.player1.keys == 3 || game.player2.keys == 3 ? true : false;
   }
 
   // assumes ties are not possible.
@@ -317,8 +310,9 @@ class GameVisuals {
 
   void render(GameState game) {
     lcd.home();
-    if (isGameOver(game)) renderWinner(game);
-    else {
+    if (isGameOver(game)) {
+      renderWinner(game);
+    } else {
       if (game.currentPhase == titlePage) renderTitle();
       // if (game.currentPhase == player1Prompt) renderP1Prompt(game);
       // if (game.currentPhase == player2Prompt) renderP2Prompt(game);
