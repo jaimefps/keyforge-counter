@@ -19,6 +19,12 @@ void setup() {
   Serial.begin(9600);
 }
 
+enum PlayerStats { 
+  ch, 
+  ae, 
+  ky
+};
+
 enum GamePhases {
   titlePage,
   // player1Prompt,
@@ -28,8 +34,6 @@ enum GamePhases {
   drawPrompt,
   forgePrompt
 };
-
-enum PlayerStats { ch, ae, ky };
 
 int calcChange(int currentValue, int delta, int minimum, int maximum) {
   return min(max(currentValue + delta, minimum), maximum);
@@ -117,9 +121,9 @@ class GameState {
 
   void setNextTurnState() {
     currentStat = 0;
-    currentPlayer = currentPlayer == 1 ? 2 : 1;
     currentPlayerHand = 0;
     currentPlayerPenalty = 0;
+    currentPlayer = currentPlayer == 1 ? 2 : 1;
   }
 
   void attemptForge() {
@@ -189,8 +193,6 @@ class GameState {
   }
 };
 
-GameState game;
-
 class GameVisuals {
   private:
 
@@ -204,7 +206,7 @@ class GameVisuals {
     lcd.print("ae:k");
   }
 
-  void renderStatusCursor() {
+  void renderStatusCursor(GameState game) {
     int offset = game.currentPlayer == 1 ? p1offset : p2offset;
     if (game.currentStat == 0) lcd.setCursor(1 + offset, 0);
     if (game.currentStat == 1) lcd.setCursor(1 + offset, 1);
@@ -264,7 +266,7 @@ class GameVisuals {
     renderLabels();
     renderPlayerData(game.player1, p1offset);
     renderPlayerData(game.player2, p2offset);
-    renderStatusCursor();
+    renderStatusCursor(game);
   }
 
   void renderChainsPrompt(GameState game) {
@@ -324,50 +326,61 @@ class GameVisuals {
   }
 };
 
-GameVisuals visuals;
+class MachineState {
+  public:
 
-int lastButton;
-unsigned long lastRender = 0;
+  GameState game;
+  const GameVisuals visuals;
 
-void loop() {
-  const int currentButtons = lcd.readButtons();
+  int lastButton;
+  unsigned long lastRender = 0;
 
-  if (currentButtons != lastButton) {
-    if (currentButtons == BUTTON_SELECT) {
-      lcd.clear();
-      game.nextPhase();
-    }
-    if (currentButtons == BUTTON_LEFT) {
-      game.currentStat--;
-      if (game.currentStat < 0) {
-        game.currentStat = 2;
+  void detectInteractions() {
+    const int currentButtons = lcd.readButtons();
+
+    if (currentButtons != lastButton) {
+      if (currentButtons == BUTTON_SELECT) {
+        lcd.clear();
+        game.nextPhase();
+      }
+      if (currentButtons == BUTTON_LEFT) {
+        game.currentStat--;
+        if (game.currentStat < 0) {
+          game.currentStat = 2;
+        }
+      }
+      if (currentButtons == BUTTON_RIGHT) {
+        game.currentStat++;
+        game.currentStat %= 3;
+      }
+      if (currentButtons == BUTTON_UP) {
+        if (game.currentPhase == mainPlayPhase) game.changePlayerStat(1);
+        if (game.currentPhase == chainsPrompt) game.changeHandSize(1);
+        if (game.currentPhase == forgePrompt) game.changeForgeMod(1);
+      }
+      if (currentButtons == BUTTON_DOWN) {
+        if (game.currentPhase == mainPlayPhase) game.changePlayerStat(-1);
+        if (game.currentPhase == chainsPrompt) game.changeHandSize(-1);
+        if (game.currentPhase == forgePrompt) game.changeForgeMod(-1);
+      }
+      // toggle between players:
+      if (currentButtons == BUTTON_RIGHT + BUTTON_LEFT) {
+        game.currentPlayer = game.currentPlayer == 1 ? 2 : 1;
       }
     }
-    if (currentButtons == BUTTON_RIGHT) {
-      game.currentStat++;
-      game.currentStat %= 3;
-    }
-    if (currentButtons == BUTTON_UP) {
-      if (game.currentPhase == mainPlayPhase) game.changePlayerStat(1);
-      if (game.currentPhase == chainsPrompt) game.changeHandSize(1);
-      if (game.currentPhase == forgePrompt) game.changeForgeMod(1);
-    }
-    if (currentButtons == BUTTON_DOWN) {
-      if (game.currentPhase == mainPlayPhase) game.changePlayerStat(-1);
-      if (game.currentPhase == chainsPrompt) game.changeHandSize(-1);
-      if (game.currentPhase == forgePrompt) game.changeForgeMod(-1);
-    }
-    // toggle between players:
-    if (currentButtons == BUTTON_RIGHT + BUTTON_LEFT) {
-      game.currentPlayer = game.currentPlayer == 1 ? 2 : 1;
+
+    lastButton = currentButtons;
+    unsigned long currentTime = millis();
+
+    if (currentTime - lastRender > 250) {
+      lastRender = currentTime;
+      visuals.render(game);
     }
   }
+};
 
-  lastButton = currentButtons;
-  unsigned long currentTime = millis();
+MachineState machine;
 
-  if (currentTime - lastRender > 250) {
-    lastRender = currentTime;
-    visuals.render(game);
-  }
+void loop() {
+  machine.detectInteractions();
 }
