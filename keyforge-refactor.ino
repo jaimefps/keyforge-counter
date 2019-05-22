@@ -335,7 +335,7 @@ class MachineState {
   int lastButton;
   unsigned long lastRender = 0;
 
-  void detectInteractions() {
+  void handleGame() {
     const int currentButtons = lcd.readButtons();
 
     if (currentButtons != lastButton) {
@@ -382,5 +382,5 @@ class MachineState {
 MachineState machine;
 
 void loop() {
-  machine.detectInteractions();
+  machine.handleGame();
 }
