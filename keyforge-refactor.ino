@@ -363,7 +363,7 @@ class MachineState {
         if (game.currentPhase == chainsPrompt) game.changeHandSize(-1);
         if (game.currentPhase == forgePrompt) game.changeForgeMod(-1);
       }
-      // toggle between players:
+      // toggle between players without finish the current turn:
       if (currentButtons == BUTTON_RIGHT + BUTTON_LEFT) {
         game.currentPlayer = game.currentPlayer == 1 ? 2 : 1;
       }
