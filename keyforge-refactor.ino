@@ -327,7 +327,7 @@ class GameVisuals {
 };
 
 class MachineState {
-  public:
+  private: 
 
   GameState game;
   const GameVisuals visuals;
@@ -335,9 +335,8 @@ class MachineState {
   int lastButton;
   unsigned long lastRender = 0;
 
-  void handleGame() {
+  void handleUserActions() {
     const int currentButtons = lcd.readButtons();
-
     if (currentButtons != lastButton) {
       if (currentButtons == BUTTON_SELECT) {
         lcd.clear();
@@ -368,14 +367,22 @@ class MachineState {
         game.currentPlayer = game.currentPlayer == 1 ? 2 : 1;
       }
     }
-
     lastButton = currentButtons;
-    unsigned long currentTime = millis();
+  }
 
+  void renderGame() {
+    unsigned long currentTime = millis();
     if (currentTime - lastRender > 250) {
       lastRender = currentTime;
       visuals.render(game);
     }
+  }
+
+  public:
+
+  void handleGame() {
+    handleUserActions();
+    renderGame();
   }
 };
 
