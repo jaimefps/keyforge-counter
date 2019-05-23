@@ -102,7 +102,9 @@ class GameState {
   int currentStat = 0;
   int currentPhase = titlePage;
 
+  int targetPlayerStats = 1;
   int currentPlayer = 1;
+
   int currentPlayerForgeMod = 0;
   int currentPlayerHand = 0;
   int currentPlayerPenalty = 0;
@@ -119,11 +121,17 @@ class GameState {
     currentPlayerHand = calcChange(currentPlayerHand, delta, rules.handRange[0], rules.handRange[1]);
   }
 
+  void changePlayerStat(int delta) {
+    if (targetPlayerStats == 1) player1.changeStat(currentStat, delta);
+    else player2.changeStat(currentStat, delta);
+  }
+
   void setNextTurnState() {
     currentStat = 0;
     currentPlayerHand = 0;
     currentPlayerPenalty = 0;
     currentPlayer = currentPlayer == 1 ? 2 : 1;
+    targetPlayerStats = currentPlayer;
   }
 
   void attemptForge() {
@@ -186,11 +194,6 @@ class GameState {
         break;
     }
   }
-
-  void changePlayerStat(int delta) {
-    if (currentPlayer == 1) player1.changeStat(currentStat, delta);
-    else player2.changeStat(currentStat, delta);
-  }
 };
 
 class GameVisuals {
@@ -207,7 +210,7 @@ class GameVisuals {
   }
 
   void renderStatusCursor(GameState game) {
-    int offset = game.currentPlayer == 1 ? p1offset : p2offset;
+    int offset = game.targetPlayerStats == 1 ? p1offset : p2offset;
     if (game.currentStat == 0) lcd.setCursor(1 + offset, 0);
     if (game.currentStat == 1) lcd.setCursor(1 + offset, 1);
     if (game.currentStat == 2) lcd.setCursor(3 + offset, 1);
@@ -364,7 +367,7 @@ class MachineState {
       }
       // toggle between players without finish the current turn:
       if (currentButtons == BUTTON_RIGHT + BUTTON_LEFT) {
-        game.currentPlayer = game.currentPlayer == 1 ? 2 : 1;
+        game.targetPlayerStats = game.targetPlayerStats == 1 ? 2 : 1;
       }
     }
     lastButton = currentButtons;
