@@ -8,9 +8,6 @@ Adafruit_RGBLCDShield lcd = Adafruit_RGBLCDShield();
  * 1- titlePage animation
  * 1.2 - winner screen animation
  * 2- prompt for player names before game starts
- * 3- track whether the currentPlayer was forcibly changed (click LEFT + RIGHT), 
- *    such that if we click "SELECT" to move to next screen, 
- *    we show the prompts for the correct players.
  */
 
 void setup() {
